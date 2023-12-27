@@ -131,45 +131,50 @@ import {
   baseUrl,
   pageId,
   xhrGet,
-} from './utils';
+} from "./utils";
 
-document.domain = "coco-h5.cn" // 设置同域
+// document.domain = "coco-h5.cn" // 设置同域
 
-import CocoComponentsLoader from './coco-remote-component-loader';
+import CocoComponentsLoader from "./coco-remote-component-loader";
 
 export default {
-  name: 'coco-component',
+  name: "coco-component",
   data() {
     return {
       init: false, // coco-admin 内嵌 iframe 初始化完成
       loaded: false, // 页面数据准备完成，为了预览功能
       sortOption: {
         group: {
-          name: 'components',
+          name: "components",
           pull: true,
-          put: true
+          put: true,
         },
         sort: true,
-        animation: 200
+        animation: 200,
       },
       isEdit,
       components: window.__coco_config__.components.length
         ? window.__coco_config__.components // window.__coco_config__.components 是服务端注入的用户选择组件
-        : this.$slots.default.map(c => {
-          const name = c.componentOptions.tag;
-          const { data } =  config.componentConfig.filter(config => config.name === name)[0];
-          return {
-            name,
-            props: c.componentOptions.propsData?.obj || data
-          };
-        }),
+        : this.$slots.default.map((c) => {
+            const name = c.componentOptions.tag;
+            const { data } = config.componentConfig.filter(
+              (config) => config.name === name
+            )[0];
+            return {
+              name,
+              props: c.componentOptions.propsData?.obj || data,
+            };
+          }),
       componentConfig: config.componentConfig,
       currentIndex: 0,
       remoteComponents: [],
       page: {
         schema: config.pageConfig.schema,
-        props: (window.__coco_config__.pageData && window.__coco_config__.pageData.props) || config.pageConfig.data
-      }
+        props:
+          (window.__coco_config__.pageData &&
+            window.__coco_config__.pageData.props) ||
+          config.pageConfig.data,
+      },
     };
   },
   created() {
@@ -178,17 +183,17 @@ export default {
       xhrGet(`${baseUrl}/project/preview?id=${pageId}`, (res) => {
         this.components = res.result.components;
         this.page = res.result.pageData;
-        this.$emit('init', this.page.props);
+        this.$emit("init", this.page.props);
         this.loaded = true;
       });
       return;
     }
     this.loaded = true;
-    this.$emit('init', this.page.props);
+    this.$emit("init", this.page.props);
     if (!isEdit) return;
-    window.addEventListener('message', (e) => {
+    window.addEventListener("message", (e) => {
       // 不接受消息源来自于当前窗口的消息
-      if (e.source === window || e.data === 'loaded') {
+      if (e.source === window || e.data === "loaded") {
         return;
       }
       this.isEdit = true;
@@ -211,21 +216,21 @@ export default {
     getConfig() {
       this.init = true;
       postMsgToParent({
-        type: 'returnConfig',
+        type: "returnConfig",
         data: {
           components: this.componentConfig,
           userSelectComponents: this.components,
           currentIndex: this.currentIndex,
           remoteComponents: this.remoteComponents,
-          page: this.page
-        }
+          page: this.page,
+        },
       });
     },
     reset({ userSelectComponents, currentIndex, page }) {
       this.components = userSelectComponents;
       this.currentIndex = currentIndex;
       this.page = page;
-      this.$emit('init', this.page.props);
+      this.$emit("init", this.page.props);
     },
     /**
      * 远程组件加载完成后需要生成 props
@@ -234,11 +239,14 @@ export default {
      */
     remoteComponentLoad({ config, index }) {
       if (!this.isEdit) return;
-      const has = this.remoteComponents.filter(item => `${config.name}.${config.version}` === `${item.name}.${item.version}`)[0];
+      const has = this.remoteComponents.filter(
+        (item) =>
+          `${config.name}.${config.version}` === `${item.name}.${item.version}`
+      )[0];
       if (!has) {
         this.remoteComponents.push(config);
       }
-      this.components.forEach(item => {
+      this.components.forEach((item) => {
         if (item.config && item.config.index === index) {
           item.props = item.props || config.data;
         }
@@ -250,23 +258,31 @@ export default {
      * @param data
      * @param index
      */
-    addComponent({data, index}) {
+    addComponent({ data, index }) {
       // 没有 schema 是系统组件
       this.currentIndex = index ? index + 1 : index;
       if (!data.schema) {
-        this.components = [...this.components.slice(0, this.currentIndex), {
-          name: 'coco-components-loader',
-          props: null,
-          config: {
-            ...data,
-            index: this.currentIndex
-          }
-        }, ...this.components.slice(this.currentIndex, this.components.length)];
+        this.components = [
+          ...this.components.slice(0, this.currentIndex),
+          {
+            name: "coco-components-loader",
+            props: null,
+            config: {
+              ...data,
+              index: this.currentIndex,
+            },
+          },
+          ...this.components.slice(this.currentIndex, this.components.length),
+        ];
       } else {
-        this.components = [...this.components.slice(0, this.currentIndex), {
-          name: data.name,
-          props: data.data
-        }, ...this.components.slice(this.currentIndex, this.components.length)];
+        this.components = [
+          ...this.components.slice(0, this.currentIndex),
+          {
+            name: data.name,
+            props: data.data,
+          },
+          ...this.components.slice(this.currentIndex, this.components.length),
+        ];
         this.getConfig();
       }
     },
@@ -275,11 +291,11 @@ export default {
      * @param payload
      */
     changeProps(payload) {
-      if (payload.type === '__page') {
+      if (payload.type === "__page") {
         this.page.props = payload;
-        this.$emit('init', this.page.props);
+        this.$emit("init", this.page.props);
       } else {
-        this.$set(this.components[this.currentIndex], 'props', payload);
+        this.$set(this.components[this.currentIndex], "props", payload);
       }
       this.getConfig();
     },
@@ -308,14 +324,13 @@ export default {
       this.components = [
         ...this.components.slice(0, index),
         JSON.parse(JSON.stringify(this.components[index])),
-        ...this.components.slice(index, this.components.length)
+        ...this.components.slice(index, this.components.length),
       ];
       this.changeIndex(index + 1);
-    }
+    },
   },
   components: {
     CocoComponentsLoader,
-  }
+  },
 };
 </script>
-
